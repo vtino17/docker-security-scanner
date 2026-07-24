@@ -1,5 +1,7 @@
 # Docker Security Scanner
 
+[![CI](https://github.com/vtino17/docker-security-scanner/actions/workflows/ci.yml/badge.svg)](https://github.com/vtino17/docker-security-scanner/actions/workflows/ci.yml)
+
 Scan Docker containers and images for security misconfigurations, exposed ports, vulnerable packages, and CIS benchmark violations.
 
 ## Install
