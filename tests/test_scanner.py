@@ -74,14 +74,13 @@ def test_scan_container_mocked_inspect():
             "PortBindings": {}
         }
     }]
-    import dss.scanner as sc
-    original = sc._run_json
-    sc._run_json = lambda cmd: mock_inspect if "inspect" in cmd else []
-    try:
-        r = sc.scan_container("test123")
-        assert r.image == "nginx:latest"
-        severities = {f.severity for f in r.findings}
-        assert "HIGH" in severities
-        assert "INFO" in severities
-    finally:
-        sc._run_json = original
+    def fake_run_json(cmd):
+        return mock_inspect if "inspect" in cmd else []
+
+    with patch("dss.scanner._run_json", side_effect=fake_run_json):
+        r = scan_container("test123")
+
+    assert r.image == "nginx:latest"
+    severities = {f.severity for f in r.findings}
+    assert "HIGH" in severities
+    assert "INFO" in severities
