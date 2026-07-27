@@ -2,6 +2,7 @@ import json
 import sys
 import os
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -50,9 +51,9 @@ def test_scan_result_medium_keeps_healthy():
     assert r.healthy is True
 
 
-def test_scan_container_no_docker(mocker):
-    mocker.patch("dss.scanner._run_json", return_value=[])
-    r = scan_container("nonexistent")
+def test_scan_container_no_docker():
+    with patch("dss.scanner._run_json", return_value=[]):
+        r = scan_container("nonexistent")
     assert r.healthy is False
     assert r.image == "unknown"
 
@@ -73,14 +74,13 @@ def test_scan_container_mocked_inspect():
             "PortBindings": {}
         }
     }]
-    import dss.scanner as sc
-    original = sc._run_json
-    sc._run_json = lambda cmd: mock_inspect if "inspect" in cmd else []
-    try:
-        r = sc.scan_container("test123")
-        assert r.image == "nginx:latest"
-        severities = {f.severity for f in r.findings}
-        assert "HIGH" in severities
-        assert "INFO" in severities
-    finally:
-        sc._run_json = original
+    def fake_run_json(cmd):
+        return mock_inspect if "inspect" in cmd else []
+
+    with patch("dss.scanner._run_json", side_effect=fake_run_json):
+        r = scan_container("test123")
+
+    assert r.image == "nginx:latest"
+    severities = {f.severity for f in r.findings}
+    assert "HIGH" in severities
+    assert "INFO" in severities
