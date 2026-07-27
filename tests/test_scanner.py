@@ -2,6 +2,7 @@ import json
 import sys
 import os
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -50,9 +51,9 @@ def test_scan_result_medium_keeps_healthy():
     assert r.healthy is True
 
 
-def test_scan_container_no_docker(mocker):
-    mocker.patch("dss.scanner._run_json", return_value=[])
-    r = scan_container("nonexistent")
+def test_scan_container_no_docker():
+    with patch("dss.scanner._run_json", return_value=[]):
+        r = scan_container("nonexistent")
     assert r.healthy is False
     assert r.image == "unknown"
 
