@@ -41,7 +41,18 @@ def _run_json(cmd: List[str]) -> list:
     try:
         return json.loads(out)
     except json.JSONDecodeError:
-        return []
+        # Docker's --format '{{json .}}' emits one JSON object per line,
+        # rather than a JSON array. Parse the stream without silently
+        # discarding every image after json.loads() rejects the whole string.
+        values = []
+        for line in out.splitlines():
+            if not line.strip():
+                continue
+            try:
+                values.append(json.loads(line))
+            except json.JSONDecodeError:
+                return []
+        return values
 
 
 def _parse_ports(ports_str: str) -> List[str]:
