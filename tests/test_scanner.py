@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from dss.scanner import ContainerFinding, ScanResult, scan_container
+from dss.scanner import ContainerFinding, ScanResult, _run_json, scan_container
 
 
 def test_container_finding_defaults():
@@ -84,3 +84,15 @@ def test_scan_container_mocked_inspect():
     severities = {f.severity for f in r.findings}
     assert "HIGH" in severities
     assert "INFO" in severities
+
+
+def test_run_json_parses_docker_json_lines():
+    output = '{"Repository":"api","CreatedAt":"2026-01-01"}\n{"Repository":"worker","CreatedAt":"2026-01-02"}'
+    with patch("dss.scanner._run", return_value=output):
+        rows = _run_json(["docker", "images", "--format", "{{json .}}"])
+    assert [row["Repository"] for row in rows] == ["api", "worker"]
+
+
+def test_run_json_rejects_partially_invalid_streams():
+    with patch("dss.scanner._run", return_value='{"ok":true}\nnot-json'):
+        assert _run_json(["docker", "images"]) == []
