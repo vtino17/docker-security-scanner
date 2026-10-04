@@ -48,7 +48,7 @@ def main():
 
     if args.output:
         html = generate_report(results)
-        with open(args.output, "w") as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             f.write(html)
         print(f"Report written to {args.output}")
 
